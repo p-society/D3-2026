@@ -52,8 +52,32 @@
   50% { transform: translateY(-8px); }
 }
 
+
+@keyframes laneScrollLeft {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+@keyframes laneScrollRight {
+  from { transform: translateX(-50%); }
+  to { transform: translateX(0); }
+}
+
+.lane-scroll-left {
+  animation: laneScrollLeft 48s linear infinite;
+}
+
+.lane-scroll-right {
+  animation: laneScrollRight 48s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-retro-float {
+    animation: none;
+  }
+
+  .lane-scroll-left,
+  .lane-scroll-right {
     animation: none;
   }
 }
