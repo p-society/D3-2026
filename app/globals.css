@@ -35,40 +35,76 @@
 }
 
 @layer utilities {
+  /* ========================================
+     FONTS
+  ======================================== */
+
   .font-pixel {
     font-family: 'Press Start 2P', 'Courier New', monospace;
   }
+
   .font-vt323 {
     font-family: 'VT323', monospace;
   }
+
   .font-silkscreen {
     font-family: 'Silkscreen', cursive, sans-serif;
   }
+
   .font-mario {
     font-family: var(--font-mario), sans-serif;
   }
+
   .font-steve {
     font-family: var(--font-steve), sans-serif;
   }
+
   .font-pac {
     font-family: var(--font-pac), monospace;
   }
 
-  /* Neon text shadows */
+
+  /* ========================================
+     NEON TEXT
+  ======================================== */
+
   .neon-cyan {
-    text-shadow: 0 0 5px #00f0ff, 0 0 10px #00f0ff, 0 0 20px #00f0ff, 0 0 40px #00f0ff;
-  }
-  .neon-pink {
-    text-shadow: 0 0 5px #ff007f, 0 0 10px #ff007f, 0 0 20px #ff007f, 0 0 40px #ff007f;
-  }
-  .neon-green {
-    text-shadow: 0 0 5px #39ff14, 0 0 10px #39ff14, 0 0 20px #39ff14, 0 0 40px #39ff14;
-  }
-  .neon-yellow {
-    text-shadow: 0 0 5px #ffe600, 0 0 10px #ffe600, 0 0 20px #ffe600, 0 0 40px #ffe600;
+    text-shadow:
+      0 0 5px #00f0ff,
+      0 0 10px #00f0ff,
+      0 0 20px #00f0ff,
+      0 0 40px #00f0ff;
   }
 
-  /* Pixel box borders */
+  .neon-pink {
+    text-shadow:
+      0 0 5px #ff007f,
+      0 0 10px #ff007f,
+      0 0 20px #ff007f,
+      0 0 40px #ff007f;
+  }
+
+  .neon-green {
+    text-shadow:
+      0 0 5px #39ff14,
+      0 0 10px #39ff14,
+      0 0 20px #39ff14,
+      0 0 40px #39ff14;
+  }
+
+  .neon-yellow {
+    text-shadow:
+      0 0 5px #ffe600,
+      0 0 10px #ffe600,
+      0 0 20px #ffe600,
+      0 0 40px #ffe600;
+  }
+
+
+  /* ========================================
+     PIXEL BOX
+  ======================================== */
+
   .pixel-box {
     box-shadow:
       0 -4px 0 0 #000,
@@ -76,6 +112,7 @@
       -4px 0 0 0 #000,
       4px 0 0 0 #000;
   }
+
   .pixel-box-cyan {
     box-shadow:
       0 -4px 0 0 #00f0ff,
@@ -84,6 +121,7 @@
       4px 0 0 0 #00f0ff,
       0 0 15px rgba(0, 240, 255, 0.4);
   }
+
   .pixel-box-pink {
     box-shadow:
       0 -4px 0 0 #ff007f,
@@ -93,13 +131,19 @@
       0 0 15px rgba(255, 0, 127, 0.4);
   }
 
-  /* CRT & Scanline effects */
+
+  /* ========================================
+     CRT SCANLINES
+  ======================================== */
+
   .crt-scanlines {
     background: linear-gradient(
       rgba(18, 16, 16, 0) 50%,
       rgba(0, 0, 0, 0.4) 50%
     );
+
     background-size: 100% 4px;
+
     pointer-events: none;
   }
 
@@ -107,50 +151,412 @@
     animation: crtFlicker 0.15s infinite;
   }
 
+
+  /* ========================================
+     FLOAT ANIMATION
+  ======================================== */
+
   .animate-retro-float {
     animation: retroFloat 3s ease-in-out infinite;
   }
 
+
+  /* ========================================
+     PACMAN ANIMATION
+  ======================================== */
+
   .animate-pacman-chomp {
     animation: pacmanChomp 0.4s infinite alternate;
   }
+
+
+  /* ========================================
+     PULSE GLOW
+  ======================================== */
 
   .animate-pulse-glow {
     animation: pulseGlow 2s ease-in-out infinite;
   }
 }
 
+
+/* ==========================================
+   RETRO FLOAT
+========================================== */
+
 @keyframes retroFloat {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+
+  50% {
+    transform: translateY(-10px);
+  }
 }
+
+
+/* ==========================================
+   PULSE GLOW
+========================================== */
 
 @keyframes pulseGlow {
-  0%, 100% { opacity: 0.8; filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.6)); }
-  50% { opacity: 1; filter: drop-shadow(0 0 20px rgba(0, 240, 255, 1)); }
+  0%,
+  100% {
+    opacity: 0.8;
+
+    filter: drop-shadow(
+      0 0 8px rgba(0, 240, 255, 0.6)
+    );
+  }
+
+  50% {
+    opacity: 1;
+
+    filter: drop-shadow(
+      0 0 20px rgba(0, 240, 255, 1)
+    );
+  }
 }
+
+
+/* ==========================================
+   CRT FLICKER
+========================================== */
 
 @keyframes crtFlicker {
-  0% { opacity: 0.97; }
-  50% { opacity: 1; }
-  100% { opacity: 0.98; }
+  0% {
+    opacity: 0.97;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0.98;
+  }
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
+
+/* ==========================================
+   GLOBAL PAGE SETTINGS
+========================================== */
+
+html {
+  /*
+    Hide the browser scrollbar.
+    We use our own custom indicator below.
+  */
+
+  scrollbar-width: none;
+
+  scroll-behavior: smooth;
+
+  /*
+    Prevent horizontal overflow.
+  */
+
+  overflow-x: hidden;
 }
-::-webkit-scrollbar-track {
-  background: #050510;
+
+html::-webkit-scrollbar {
+  display: none;
 }
-::-webkit-scrollbar-thumb {
+
+body {
+  min-height: 100vh;
+
+  overflow-x: hidden;
+
+  background: var(--background);
+
+  color: var(--foreground);
+}
+
+
+/* ==========================================
+   CUSTOM CYBERPUNK SCROLL INDICATOR
+
+   The normal browser scrollbar is removed.
+
+   This creates:
+   - Fixed vertical track
+   - Fixed-size neon dot
+   - Dot moves while scrolling
+========================================== */
+
+
+/* Main fixed container */
+
+.custom-scroll-indicator {
+  position: fixed;
+
+  /*
+    Distance from right side
+  */
+
+  right: 18px;
+
+  /*
+    Center vertically
+  */
+
+  top: 50%;
+
+  transform: translateY(-50%);
+
+  /*
+    Width of indicator area
+  */
+
+  width: 18px;
+
+  /*
+    Height of the complete track
+  */
+
+  height: 70vh;
+
+  /*
+    Keep above page content
+  */
+
+  z-index: 9999;
+
+  /*
+    User cannot accidentally click it
+  */
+
+  pointer-events: none;
+}
+
+
+/* ==========================================
+   VERTICAL TRACK
+========================================== */
+
+.scroll-indicator-track {
+  position: relative;
+
+  /*
+    Thin vertical line
+  */
+
+  width: 3px;
+
+  /*
+    Track height remains the same
+    on every page
+  */
+
+  height: 100%;
+
+  /*
+    Center the line
+  */
+
+  margin: 0 auto;
+
+  background: rgba(168, 85, 247, 0.25);
+
+  box-shadow:
+    0 0 5px rgba(168, 85, 247, 0.4),
+    0 0 12px rgba(0, 240, 255, 0.15);
+}
+
+
+/* ==========================================
+   FIXED SIZE NEON DOT
+========================================== */
+
+.scroll-indicator-dot {
+  position: absolute;
+
+  /*
+    Center dot on track
+  */
+
+  left: 50%;
+
+  /*
+    FIXED SIZE
+
+    This never changes based on
+    page length.
+  */
+
+  width: 14px;
+
+  height: 14px;
+
+  /*
+    Move dot exactly onto track
+  */
+
+  transform: translate(-50%, -50%);
+
+  /*
+    Circular dot
+  */
+
+  border-radius: 50%;
+
+  /*
+    Neon pink/red
+  */
+
   background: #ff007f;
-  border-radius: 0px;
-  border: 1px solid #00f0ff;
+
+  border: 2px solid #ff4da6;
+
+  /*
+    Neon glow
+  */
+
+  box-shadow:
+    0 0 5px #ff007f,
+    0 0 10px #ff007f,
+    0 0 20px #ff007f,
+    0 0 30px rgba(255, 0, 127, 0.8);
+
+  /*
+    Smooth movement
+  */
+
+  transition: top 0.08s linear;
 }
-::-webkit-scrollbar-thumb:hover {
+
+
+/* ==========================================
+   DOT OUTER GLOW
+========================================== */
+
+.scroll-indicator-dot::after {
+  content: "";
+
+  position: absolute;
+
+  top: 50%;
+
+  left: 50%;
+
+  width: 24px;
+
+  height: 24px;
+
+  transform: translate(-50%, -50%);
+
+  border-radius: 50%;
+
+  background: rgba(255, 0, 127, 0.15);
+
+  box-shadow:
+    0 0 15px rgba(255, 0, 127, 0.5);
+}
+
+
+/* ==========================================
+   TOP / BOTTOM GLOW
+========================================== */
+
+.scroll-indicator-track::before {
+  content: "";
+
+  position: absolute;
+
+  top: 0;
+
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  width: 7px;
+
+  height: 7px;
+
+  border-radius: 50%;
+
   background: #00f0ff;
+
+  box-shadow:
+    0 0 5px #00f0ff,
+    0 0 10px #00f0ff;
 }
+
+
+.scroll-indicator-track::after {
+  content: "";
+
+  position: absolute;
+
+  bottom: 0;
+
+  left: 50%;
+
+  transform: translateX(-50%);
+
+  width: 7px;
+
+  height: 7px;
+
+  border-radius: 50%;
+
+  background: #ff00e5;
+
+  box-shadow:
+    0 0 5px #ff00e5,
+    0 0 10px #ff00e5;
+}
+
+
+/* ==========================================
+   MOBILE
+========================================== */
+
+@media (max-width: 768px) {
+  .custom-scroll-indicator {
+    /*
+      Move closer to edge
+    */
+
+    right: 8px;
+
+    /*
+      Slightly smaller track
+    */
+
+    height: 65vh;
+
+    width: 14px;
+  }
+
+  .scroll-indicator-track {
+    width: 2px;
+  }
+
+  .scroll-indicator-dot {
+    /*
+      Still fixed size on every
+      mobile page
+    */
+
+    width: 12px;
+
+    height: 12px;
+  }
+
+  .scroll-indicator-dot::after {
+    width: 20px;
+
+    height: 20px;
+  }
+}
+
+
+/* ==========================================
+   REDUCED MOTION
+========================================== */
 
 @media (prefers-reduced-motion: reduce) {
   .animate-retro-float,
@@ -158,5 +564,13 @@
   .animate-pulse-glow,
   .crt-flicker {
     animation: none;
+  }
+
+  html {
+    scroll-behavior: auto;
+  }
+
+  .scroll-indicator-dot {
+    transition: none;
   }
 }
