@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+
 import { RetroAudioProvider } from "@/components/retro-audio";
 import { SmoothScroll } from "@/components/smooth-scroll";
 import { RetroNavbar } from "@/components/retro-navbar";
+import ScrollIndicator from "@/components/ScrollIndicator";
 
 const marioFont = localFont({
   src: "../public/fonts/SuperMario256.ttf",
@@ -38,7 +40,9 @@ export const metadata: Metadata = {
 
 export default function RootLayout({
   children,
-}: Readonly<{ children: React.ReactNode }>) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
     <html
       lang="en"
@@ -46,11 +50,18 @@ export default function RootLayout({
     >
       <body className="min-h-full flex flex-col bg-[#05020c] text-white selection:bg-[#ff7bf5] selection:text-white antialiased overflow-x-hidden">
         <RetroAudioProvider>
-          <SmoothScroll>
-            {/* Single Root Fixed Navbar mounted once */}
-            <RetroNavbar />
-            <main className="flex-1 w-full">{children}</main>
-          </SmoothScroll>
+
+          {/* Navigation */}
+          <RetroNavbar />
+
+          {/* Main Page Content */}
+          <main className="flex-1 w-full">
+            {children}
+          </main>
+
+          {/* Custom Scroll Indicator */}
+          <ScrollIndicator />
+
         </RetroAudioProvider>
       </body>
     </html>
