@@ -28,6 +28,7 @@ import {
   Search,
 } from "lucide-react";
 import { FEST_CONFIG, EventItem } from "@/lib/d3fest.config";
+import { off } from "process";
 
 export default function EventsPage() {
   const { playSfx } = useRetroAudio();
@@ -75,15 +76,17 @@ export default function EventsPage() {
   const pathWaypoints = useMemo(() => {
     const points: { x: number; y: number }[] = [];
     const totalEvents = allEvents.length;
-
+    // fixed a disconnected yellow grid by adding point 
+    points.push({ x: 20, y: -2.5 })
     for (let i = 0; i < totalEvents; i++) {
+      const offset = 2.5;
       const isEven = i % 2 === 0;
       // y-position matching the center of each card row
       const yPos = 2.5 + (i / (totalEvents - 1)) * 93;
       const cardX = isEven ? 25 : 75;
 
       if (i === 0) {
-        points.push({ x: 25, y: yPos });
+        points.push({ x: 20, y: yPos });
       } else {
         const prevX = points[points.length - 1].x;
         // 1. Move vertically down to new row
@@ -103,8 +106,9 @@ export default function EventsPage() {
   }, [allEvents.length]);
 
   // Generate continuous yellow grid dots along each orthogonal segment
+  //  position of the grid is rectified
   const allDots = useMemo(() => {
-    const dots: { x: number; y: number; id: number }[] = [];
+    const dots: { x: number; y: number; id: number; segIdx: number; segT: number }[] = [];
     let dotId = 0;
 
     for (let i = 0; i < pathWaypoints.length - 1; i++) {
@@ -113,21 +117,32 @@ export default function EventsPage() {
       const isH = p1.y === p2.y;
       const steps = isH
         ? Math.max(6, Math.round(Math.abs(p2.x - p1.x) / 1.6))
-        : Math.max(5, Math.round(Math.abs(p2.y - p1.y) / 0.8));
-
+        : Math.max(6, Math.round(Math.abs(p2.y - p1.y) / 0.7));
+      // adding bias of 2.35 for matching y-posiotion
       for (let s = 0; s <= steps; s++) {
         const t = s / steps;
         dots.push({
           x: p1.x + (p2.x - p1.x) * t,
-          y: p1.y + (p2.y - p1.y) * t,
+          y: p1.y + (p2.y - p1.y) * t + 2.35,
           id: dotId++,
+          segIdx: i,
+          segT: t,
         });
       }
     }
     return dots;
   }, [pathWaypoints]);
 
+  // pre-compute the normalized progress (0–1) for each dot along the waypoint path
+  // so dot eating is perfectly synchronized with Pac-Man's segment-based movement
+  const dotProgressValues = useMemo(() => {
+    const totalSegs = pathWaypoints.length - 1;
+    // map the dots with segment interval and segmentId 
+    return allDots.map((dot) => (dot.segIdx + dot.segT) / totalSegs);
+  }, [allDots, pathWaypoints]);
+
   // Calculate Pac-Man position and orthogonal rotation along waypoints
+  // roatations are correct
   const getPacmanPos = useMemo(() => {
     return (prog: number) => {
       const totalSegs = pathWaypoints.length - 1;
@@ -139,7 +154,7 @@ export default function EventsPage() {
       const p2 = pathWaypoints[segIdx + 1];
 
       const x = p1.x + (p2.x - p1.x) * segT;
-      const y = p1.y + (p2.y - p1.y) * segT;
+      const y = p1.y + (p2.y - p1.y) * segT + 2.39;
 
       let rot = 0;
       let flipY = false;
@@ -169,80 +184,99 @@ export default function EventsPage() {
     // Refresh ScrollTrigger when layout mounts
     ScrollTrigger.refresh();
 
+    // Smoothed progress: scroll sets the target, ticker lerps toward it
+    let targetProgress = 0;
+    let smoothProgress = 0;
+    const LERP_SPEED = 0.045; // lower = smoother/slower (0.03–0.08 is the sweet spot)
+
     const ctx = gsap.context(() => {
       ScrollTrigger.create({
         trigger: container,
         start: "top top+=80",
         end: "bottom bottom-=80",
-        scrub: 0.1,
         onUpdate: (self) => {
-          const prog = self.progress;
-          const pos = getPacmanPos(prog);
-
-          // 1. Direct 60fps DOM update for Pac-Man (never lags or freezes)
-          pacmanEl.style.left = `${pos.x}%`;
-          pacmanEl.style.top = `${pos.y}%`;
-          pacmanEl.style.transform = `translate(-50%, -50%) rotate(${pos.rot}deg) ${
-            pos.flipY ? "scaleY(-1)" : ""
-          }`;
-
-          // 2. Dim eaten dots
-          if (dotsContainerRef.current) {
-            const dotElements = dotsContainerRef.current.children;
-            const eatenIndex = Math.floor(prog * dotElements.length);
-            for (let i = 0; i < dotElements.length; i++) {
-              const el = dotElements[i] as HTMLElement;
-              if (i <= eatenIndex) {
-                el.style.opacity = "0.15";
-                el.style.transform = "translate(-50%, -50%) scale(0.6)";
-                el.style.backgroundColor = "#52525b";
-                el.style.boxShadow = "none";
-              } else {
-                el.style.opacity = "1";
-                el.style.transform = "translate(-50%, -50%) scale(1)";
-                el.style.backgroundColor = "#ffe600";
-                el.style.boxShadow = "0 0 8px #ffe600";
-              }
-            }
-          }
-
-          // 3. Highlight & GLOW the active event card as Pac-Man arrives
-          const totalEvents = allEvents.length;
-          const targetCardIdx = Math.min(
-            Math.floor(prog * totalEvents),
-            totalEvents - 1
-          );
-
-          if (targetCardIdx !== currentActiveIdx.current) {
-            currentActiveIdx.current = targetCardIdx;
-
-            cardRefs.current.forEach((cardEl, idx) => {
-              if (!cardEl) return;
-              if (idx === targetCardIdx) {
-                // Glow active card
-                cardEl.classList.add(
-                  "ring-2",
-                  "ring-[#ffe600]",
-                  "scale-[1.02]",
-                  "shadow-[0_0_35px_rgba(255,230,0,0.7)]"
-                );
-              } else {
-                // Remove active glow
-                cardEl.classList.remove(
-                  "ring-2",
-                  "ring-[#ffe600]",
-                  "scale-[1.02]",
-                  "shadow-[0_0_35px_rgba(255,230,0,0.7)]"
-                );
-              }
-            });
-          }
+          // Only store the target — don't move Pac-Man here
+          targetProgress = self.progress;
         },
       });
     }, container);
 
-    return () => ctx.revert();
-  }, [allEvents.length, getPacmanPos]);
+    // Smooth animation loop running at 60fps via GSAP ticker
+    const tickerFn = () => {
+      // Lerp: smoothly ease current progress toward the scroll target
+      smoothProgress += (targetProgress - smoothProgress) * LERP_SPEED;
+
+      // Snap when very close to avoid infinite micro-updates
+      if (Math.abs(targetProgress - smoothProgress) < 0.0001) {
+        smoothProgress = targetProgress;
+      }
+
+      const prog = smoothProgress;
+      const pos = getPacmanPos(prog);
+
+      // 1. Direct 60fps DOM update for Pac-Man (buttery smooth)
+      pacmanEl.style.left = `${pos.x}%`;
+      pacmanEl.style.top = `${pos.y}%`;
+      pacmanEl.style.transform = `translate(-50%, -50%) rotate(${pos.rot}deg) ${pos.flipY ? "scaleY(-1)" : ""
+        }`;
+
+      // 2. Dim eaten dots (synchronized with Pac-Man's path position)
+      if (dotsContainerRef.current) {
+        const dotElements = dotsContainerRef.current.children;
+        for (let i = 0; i < dotElements.length; i++) {
+          const el = dotElements[i] as HTMLElement;
+          if (dotProgressValues[i] <= prog) {
+            el.style.opacity = "0.15";
+            el.style.transform = "translate(-50%, -50%) scale(0.6)";
+            el.style.backgroundColor = "#52525b";
+            el.style.boxShadow = "none";
+          } else {
+            el.style.opacity = "1";
+            el.style.transform = "translate(-50%, -50%) scale(1)";
+            el.style.backgroundColor = "#ffe600";
+            el.style.boxShadow = "0 0 8px #ffe600";
+          }
+        }
+      }
+
+      // 3. Highlight & GLOW the active event card as Pac-Man arrives
+      const totalEvents = allEvents.length;
+      const targetCardIdx = Math.min(
+        Math.floor(prog * totalEvents),
+        totalEvents - 1
+      );
+
+      if (targetCardIdx !== currentActiveIdx.current) {
+        currentActiveIdx.current = targetCardIdx;
+
+        cardRefs.current.forEach((cardEl, idx) => {
+          if (!cardEl) return;
+          if (idx === targetCardIdx) {
+            cardEl.classList.add(
+              "ring-2",
+              "ring-[#ffe600]",
+              "scale-[1.02]",
+              "shadow-[0_0_35px_rgba(255,230,0,0.7)]"
+            );
+          } else {
+            cardEl.classList.remove(
+              "ring-2",
+              "ring-[#ffe600]",
+              "scale-[1.02]",
+              "shadow-[0_0_35px_rgba(255,230,0,0.7)]"
+            );
+          }
+        });
+      }
+    };
+
+    gsap.ticker.add(tickerFn);
+
+    return () => {
+      gsap.ticker.remove(tickerFn);
+      ctx.revert();
+    };
+  }, [allEvents.length, getPacmanPos, dotProgressValues]);
 
   const handleCtaClick = (event: EventItem) => {
     if (event.stateRounds && event.stateRounds.length > 0) {
@@ -333,15 +367,15 @@ export default function EventsPage() {
               idx % 3 === 0
                 ? "border-[#00f0ff] shadow-[0_0_15px_rgba(0,240,255,0.3)]"
                 : idx % 3 === 1
-                ? "border-[#ff7bf5] shadow-[0_0_15px_rgba(255,123,245,0.3)]"
-                : "border-[#ffe600] shadow-[0_0_15px_rgba(255,230,0,0.3)]";
+                  ? "border-[#ff7bf5] shadow-[0_0_15px_rgba(255,123,245,0.3)]"
+                  : "border-[#ffe600] shadow-[0_0_15px_rgba(255,230,0,0.3)]";
 
             const badgeBg =
               idx % 3 === 0
                 ? "bg-[#00f0ff] text-black"
                 : idx % 3 === 1
-                ? "bg-[#ff7bf5] text-black"
-                : "bg-[#ffe600] text-black";
+                  ? "bg-[#ff7bf5] text-black"
+                  : "bg-[#ffe600] text-black";
 
             return (
               <div
@@ -349,9 +383,8 @@ export default function EventsPage() {
                 ref={(el) => {
                   cardRefs.current[idx] = el;
                 }}
-                className={`w-full md:w-[48%] max-w-[580px] ${
-                  isEven ? "self-start md:mr-auto" : "self-end md:ml-auto"
-                } transition-all duration-200`}
+                className={`w-full md:w-[48%] max-w-[580px] ${isEven ? "self-start md:mr-auto" : "self-end md:ml-auto"
+                  } transition-all duration-200`}
               >
                 {/* Compact Level Tag Header */}
                 <div className="flex items-center justify-between gap-2 mb-1">
@@ -537,11 +570,10 @@ export default function EventsPage() {
                   playSfx("blip");
                   setActiveCategory(cat);
                 }}
-                className={`px-2.5 py-1 font-pixel text-[8px] sm:text-[9px] uppercase font-bold tracking-wider transition-all cursor-pointer ${
-                  activeCategory === cat
-                    ? "bg-[#ff7bf5] text-black border border-white shadow-[0_0_10px_#ff7bf5] scale-105"
-                    : "bg-black/80 text-zinc-400 border border-white/15 hover:border-[#ff7bf5] hover:text-white"
-                }`}
+                className={`px-2.5 py-1 font-pixel text-[8px] sm:text-[9px] uppercase font-bold tracking-wider transition-all cursor-pointer ${activeCategory === cat
+                  ? "bg-[#ff7bf5] text-black border border-white shadow-[0_0_10px_#ff7bf5] scale-105"
+                  : "bg-black/80 text-zinc-400 border border-white/15 hover:border-[#ff7bf5] hover:text-white"
+                  }`}
               >
                 {cat}
               </button>
