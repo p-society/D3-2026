@@ -1,6 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import "./globals.css";
+import { RetroAudioProvider } from "@/components/retro-audio";
+import { SmoothScroll } from "@/components/smooth-scroll";
+import { RetroNavbar } from "@/components/retro-navbar";
 
 import { RetroAudioProvider } from "@/components/retro-audio";
 import { SmoothScroll } from "@/components/smooth-scroll";

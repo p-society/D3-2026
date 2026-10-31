@@ -1,34 +1,43 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { SpiralGallery } from "./spiral-gallery";
-import { GridGallery } from "./grid-gallery";
+import React, { useSyncExternalStore } from "react";
+import dynamic from "next/dynamic";
 import type { Product } from "@/lib/products";
+
+const LazySpiralGallery = dynamic(
+  () => import("./spiral-gallery").then((mod) => mod.SpiralGallery),
+  { ssr: false }
+);
+
+const LazyGridGallery = dynamic(
+  () => import("./grid-gallery").then((mod) => mod.GridGallery),
+  { ssr: false }
+);
+
+function subscribe(callback: () => void) {
+  const mediaQuery = window.matchMedia("(max-width: 767px)");
+  mediaQuery.addEventListener("change", callback);
+  return () => mediaQuery.removeEventListener("change", callback);
+}
+
+function getSnapshot() {
+  return window.matchMedia("(max-width: 767px)").matches;
+}
+
+function getServerSnapshot() {
+  return false;
+}
 
 export function ResponsiveGallery({
   products,
 }: {
   products: Product[];
 }) {
-  const [isMobile, setIsMobile] = useState(false);
-useEffect(() => {
-  const mediaQuery = window.matchMedia("(max-width: 767px)");
+  const isMobile = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 
-  setIsMobile(mediaQuery.matches);
-
-  const handleMediaChange = (e: MediaQueryListEvent) => {
-    setIsMobile(e.matches);
-  };
-
-  mediaQuery.addEventListener("change", handleMediaChange);
-
-  return () => {
-    mediaQuery.removeEventListener("change", handleMediaChange);
-  };
-}, []);
   return isMobile ? (
-    <GridGallery products={products} />
+    <LazyGridGallery products={products} />
   ) : (
-    <SpiralGallery products={products} />
+    <LazySpiralGallery products={products} />
   );
 }
